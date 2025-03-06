@@ -73,30 +73,3 @@ class Model:
         _, _, _, pred, _, _ = self.my_net(imgs, voxels, mask, self.args.bins)
         pred = self.size_adapter.unpad(pred[0])
         return pred
-
-    def update(self, imgs, voxels, mask, learning_rate):
-        for param_group in self.optimG.param_groups:
-            param_group['lr'] = learning_rate
-        self.train()
-        gt = imgs[:, 3:6]
-        gray_gt = imgs[:, 12:15]
-        gt_list = pyramid_Img(gt)
-        gray_gt = gray_gt * mask
-
-        pure_rec, rec, Ft, img_t_third, corr, corrs = self.my_net(imgs, voxels, mask, self.args.bins)
-
-        l_rec = self.lap(rec, gray_gt) + self.perc(rec, gray_gt)
-        l_sys = self.lap(Ft, gt) + self.perc(Ft, gt)
-        l_third = 0.1 * self.perc(img_t_third[0], gt) + self.lap(img_t_third[0], gt) + 0.1 * self.lap(img_t_third[1],
-                                                                                                      gt_list[
-                                                                                                          1]) + 0.1 * self.lap(
-            img_t_third[2], gt_list[2])
-        l_patch_ssim = self.patch_ssim(img_t_third[0], gt, corr)
-        loss = l_rec + l_sys + l_third + 0.1 * (1 - l_patch_ssim)
-
-        self.optimG.zero_grad()
-        loss = loss.mean()
-        loss.backward()
-        self.optimG.step()
-
-        return rec, Ft, img_t_third[0], corr, mask, loss
