@@ -11,7 +11,7 @@ class MyNet(nn.Module):
     def __init__(self, args):
         super(MyNet, self).__init__()
         bins = args.bins
-        self.sample_factor = args.sample_factor
+        self.beta = args.beta
         self.mask_patch_size = args.mask_patch_size
         self.event_rec = EventRecNet(2 * bins)
         self.TNet = FeaTNet(bins)
@@ -54,9 +54,9 @@ class MyNet(nn.Module):
             event_feature.append(torch.cat((f_event_0t[idx], f_event_t1[idx]), dim=1))
 
         corr0_list = pyramid_patch_mask(img0, Ft, mask, patch_size=self.mask_patch_size,
-                                        sample_factor=self.sample_factor)
+                                        beta=self.beta)
         corr1_list = pyramid_patch_mask(img1, Ft, mask, patch_size=self.mask_patch_size,
-                                        sample_factor=self.sample_factor)
+                                        beta=self.beta)
 
         for i in range(len(corr0_list)):
             corr0_list[i], corr1_list[i] = mask_reverse(corr0_list[i], corr1_list[i])

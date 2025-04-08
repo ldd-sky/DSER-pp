@@ -19,7 +19,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset', default='bsergb', type=str, help='dataset name')
     parser.add_argument('--bins', default=8, type=int, help='number of time bins')
-    parser.add_argument('--sample_factor', default=1, type=int, help='sampling proportion, 1/factor')
+    parser.add_argument('--beta', default=0.1, type=int, help='exercise intensity screening threshold')
     parser.add_argument('--mask_patch_size', default=32, type=int, help='different mask patch size')
     args = parser.parse_args()
     model = Model(args)

@@ -401,14 +401,9 @@ def calculate_patch_sums(patches):
     return patch_sums
 
 
-def modify_patches_based_on_sums(patches, patch_sums, sample_factor):
+def modify_patches_based_on_sums(patches, patch_sums, beta):
     B, C, num_patches, patch_size, _ = patches.shape
-    patch_sums_sorted, indices = torch.sort(patch_sums.view(B, -1), descending=True)
-    threshold_index = num_patches // sample_factor
-    top_patches_mask = torch.zeros_like(patch_sums.view(B, -1), dtype=torch.bool)
-    top_patches_mask[torch.arange(B).unsqueeze(1), indices[:, :threshold_index]] = True
-
-    top_patches_mask = top_patches_mask.view(B, C, num_patches)
+    top_patches_mask = patch_sums >= beta
     patches = patches.view(B, C, num_patches, patch_size, patch_size)
     patches[~top_patches_mask] = 0
     patches[top_patches_mask] = 1
@@ -441,11 +436,11 @@ def reconstruct_from_patches(patches, image_size):
     return reconstructed
 
 
-def pyramid_patch_mask(img0, img1, event_mask, patch_size=32, sample_factor=4):
+def pyramid_patch_mask(img0, img1, event_mask, patch_size=32, beta=0.1):
     difference_map = make_different_map(img0, img1)
     patches = divide_into_patches(difference_map, patch_size)
     patch_sums = calculate_patch_sums(patches)
-    modified_patches = modify_patches_based_on_sums(patches, patch_sums, sample_factor)
+    modified_patches = modify_patches_based_on_sums(patches, patch_sums, beta)
     modified_difference_map = reconstruct_from_patches(modified_patches, difference_map.shape[2:])
 
     event_mask_patched = generate_event_mask_patch_mask(event_mask, patch_size)
